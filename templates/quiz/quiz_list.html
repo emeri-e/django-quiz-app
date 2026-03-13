@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzes — Quiz App{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1>Available Quizzes</h1>
+        <p>Choose a quiz to test your knowledge.</p>
+    </div>
+    {% if perms.quiz.add_quiz %}
+        <a href="{% url 'quiz:quiz_create' %}" class="btn btn-primary">
+            + Create Quiz
+        </a>
+    {% endif %}
+</div>
+
+{% if featured_quiz and is_student %}
+    {# ── Featured Quiz Landing Page (Student View) ── #}
+    <div style="max-width: 800px; margin: 4rem auto; text-align: center; padding: 3rem; background: var(--white); border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+        <div style="font-size: 4rem; margin-bottom: 2rem;">📝</div>
+        <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--gray-900);">Welcome to the Assessment</h1>
+        <p style="font-size: 1.25rem; color: var(--gray-600); margin-bottom: 2.5rem; line-height: 1.6;">
+            You are invited to take the <strong>{{ featured_quiz.title }}</strong>. 
+            Please ensure you are prepared before starting the test.
+        </p>
+        
+        <div style="display: flex; justify-content: center; gap: 2rem; margin-bottom: 3rem; flex-wrap: wrap;">
+            <div style="background: var(--gray-50); padding: 1.5rem; border-radius: 1rem; min-width: 150px;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">⏱</div>
+                <div style="font-weight: 600; color: var(--gray-900);">
+                    {% if featured_quiz.time_limit %}{{ featured_quiz.time_limit }} Minutes{% else %}No Time Limit{% endif %}
+                </div>
+                <div style="font-size: 0.85rem; color: var(--gray-500);">Duration</div>
+            </div>
+            <div style="background: var(--gray-50); padding: 1.5rem; border-radius: 1rem; min-width: 150px;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🎯</div>
+                <div style="font-weight: 600; color: var(--gray-900);">{{ featured_quiz.pass_mark }}%</div>
+                <div style="font-size: 0.85rem; color: var(--gray-500);">Pass Mark</div>
+            </div>
+            <div style="background: var(--gray-50); padding: 1.5rem; border-radius: 1rem; min-width: 150px;">
+                <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📋</div>
+                <div style="font-weight: 600; color: var(--gray-900);">{{ featured_quiz.get_question_count }}</div>
+                <div style="font-size: 0.85rem; color: var(--gray-500);">Questions</div>
+            </div>
+        </div>
+
+        {% if featured_quiz.description %}
+            <div style="background: #f8fafc; border-left: 4px solid var(--primary); padding: 1.5rem; border-radius: 0.5rem; text-align: left; margin-bottom: 3rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.5rem; color: var(--gray-700);">Instructions:</h3>
+                <div style="color: var(--gray-600); font-size: 0.95rem; line-height: 1.5;">
+                    {{ featured_quiz.description|linebreaks }}
+                </div>
+            </div>
+        {% endif %}
+
+        <a href="{% url 'quiz:quiz_detail' featured_quiz.url %}" class="btn btn-primary" style="font-size: 1.25rem; padding: 1rem 3rem; border-radius: 3rem; box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);">
+            Start Test Now →
+        </a>
+    </div>
+
+{% elif quizzes %}
+    {# ── Standard Quiz Grid (Admin or No Featured) ── #}
+    {% if featured_quiz %}
+        <div class="alert alert-warning" style="margin-bottom: 2rem;">
+            <strong>Note to Admin:</strong> A featured quiz is active. Students only see the landing page for <strong>{{ featured_quiz.title }}</strong>.
+        </div>
+    {% endif %}
+    
+    <div class="grid grid-3">
+        {% for quiz in quizzes %}
+            <div class="card quiz-card">
+                {% if quiz.image %}
+                    <img src="{{ quiz.image.url }}" alt="{{ quiz.title }}" class="quiz-image">
+                {% endif %}
+                <div class="card-body">
+                    <h3 style="margin-bottom: 0.5rem;">
+                        <a href="{% url 'quiz:quiz_detail' quiz.url %}">{{ quiz.title }}</a>
+                        {% if quiz.featured %} <span title="Featured Quiz">⭐</span>{% endif %}
+                    </h3>
+                    {% if quiz.description %}
+                        <p class="text-muted" style="font-size: 0.9rem;">
+                            {{ quiz.description|truncatewords:25 }}
+                        </p>
+                    {% endif %}
+                    <div class="quiz-meta">
+                        {% if quiz.category %}
+                            <span class="badge badge-primary">{{ quiz.category.name }}</span>
+                        {% endif %}
+                        {% if quiz.time_limit %}
+                            <span class="badge" style="background: var(--gray-200); color: var(--gray-800);">⏱ {{ quiz.time_limit }} min</span>
+                        {% endif %}
+                        {% if quiz.single_attempt %}
+                            <span class="badge badge-warning">Single Attempt</span>
+                        {% endif %}
+                        {% if quiz.pass_mark > 0 %}
+                            <span class="badge badge-info">Pass: {{ quiz.pass_mark }}%</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-footer" style="display: flex; gap: 0.5rem;">
+                    <a href="{% url 'quiz:quiz_detail' quiz.url %}" class="btn btn-primary btn-sm" style="flex: 1;">
+                        View Quiz
+                    </a>
+                    {% if perms.quiz.change_quiz %}
+                        <a href="{% url 'quiz:quiz_admin_detail' quiz.url %}" class="btn btn-secondary btn-sm" title="Manage Quiz Settings and Questions">
+                            ⚙️ Manage
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card">
+        <div class="card-body empty-state">
+            <h3>No quizzes available</h3>
+            <p>Check back later for new quizzes!</p>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

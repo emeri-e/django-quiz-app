@@ -1,0 +1,10 @@
+<!-- True/False Question Partial -->
+{% for field in form %}
+    {% for choice in field.field.choices %}
+        <div class="form-check">
+            <input type="radio" name="{{ field.html_name }}" id="answer_{{ choice.0 }}"
+                   value="{{ choice.0 }}" {% if field.value == choice.0|stringformat:"s" %}checked{% endif %}>
+            <label for="answer_{{ choice.0 }}">{{ choice.1 }}</label>
+        </div>
+    {% endfor %}
+{% endfor %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Marking — {{ sitting.quiz.title }} — Quiz App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Mark: {{ sitting.quiz.title }}</h1>
+    <p>
+        Attempt by <strong>{{ sitting.user.username|default:"Anonymous" }}</strong>
+        on {{ sitting.end|date:"M d, Y H:i" }}
+        · Score: {{ sitting.current_score }}/{{ sitting.get_total_questions }}
+    </p>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            {% for item in questions_with_answers %}
+                <div style="{% if not forloop.first %}border-top: 1px solid var(--gray-200); padding-top: 1.5rem; margin-top: 1.5rem;{% endif %}">
+                    <p class="question-number">
+                        Question {{ forloop.counter }}
+                        {% if item.question.question_type == 'essay' %}
+                            <span class="badge badge-warning">Essay — Needs Marking</span>
+                        {% endif %}
+                    </p>
+
+                    {% if item.question.figure %}
+                        {% include "quiz/includes/_question_image.html" with image=item.question.figure %}
+                    {% endif %}
+
+                    <p class="question-text" style="font-size: 1rem;">{{ item.question.content }}</p>
+
+                    <!-- User's answer -->
+                    <div class="card mb-2" style="background: var(--gray-50);">
+                        <div class="card-body" style="padding: 1rem;">
+                            <strong>User's answer:</strong>
+                            {% if item.question.question_type == 'mc' %}
+                                {% for answer in item.question.get_answers %}
+                                    {% if answer.pk|stringformat:"d" == item.user_answer %}
+                                        {{ answer.content }}
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                {{ item.user_answer|default:"No answer" }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if item.question.question_type != 'essay' %}
+                        {% include "quiz/includes/_correct_answer.html" with item=item %}
+                    {% else %}
+                        <!-- Essay marking inputs -->
+                        <div class="mt-2 p-3" style="background: var(--gray-100); border-radius: 4px;">
+                            <strong>
+                                Grade 
+                                {% if item.is_graded %}
+                                    <span class="badge {% if item.is_correct %}badge-success{% else %}badge-danger{% endif %}" style="font-size: 0.8em; margin-left: 0.5rem;">
+                                        Currently: {% if item.is_correct %}Correct{% else %}Incorrect{% endif %}
+                                    </span>
+                                {% endif %}:
+                            </strong>
+                            <div class="form-check form-check-inline" style="margin-left: 1rem; display: inline-block;">
+                                <input class="form-check-input" type="radio" name="mark_{{ item.question.pk }}" id="correct_{{ item.question.pk }}" value="correct" {% if item.is_correct %}checked{% endif %}>
+                                <label class="form-check-label" for="correct_{{ item.question.pk }}">Correct</label>
+                            </div>
+                            <div class="form-check form-check-inline" style="margin-left: 1rem; display: inline-block;">
+                                <input class="form-check-input" type="radio" name="mark_{{ item.question.pk }}" id="incorrect_{{ item.question.pk }}" value="incorrect" {% if item.is_incorrect %}checked{% endif %}>
+                                <label class="form-check-label" for="incorrect_{{ item.question.pk }}">Incorrect</label>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if item.question.explanation %}
+                        <div class="question-explanation mt-1">
+                            <strong>Explanation:</strong> {{ item.question.explanation }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <div class="mt-4 border-top pt-3 text-right">
+                <button type="submit" class="btn btn-primary">Save Grades</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'quiz:marking_list' %}" class="btn btn-secondary">← Back to Marking List</a>
+</div>
+{% endblock %}

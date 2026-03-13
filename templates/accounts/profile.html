@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Profile — {{ user.username }} — Quiz App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>My Profile</h1>
+    <p>Welcome, <strong>{{ user.username }}</strong>. Here's your quiz history.</p>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-between align-center">
+        <h3>Account Details</h3>
+    </div>
+    <div class="card-body">
+        <table>
+            <tr>
+                <td style="width: 150px;"><strong>Username</strong></td>
+                <td>{{ user.username }}</td>
+            </tr>
+            <tr>
+                <td><strong>Email</strong></td>
+                <td>{{ user.email|default:"Not set" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Joined</strong></td>
+                <td>{{ user.date_joined|date:"M d, Y" }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Completed Quizzes</h3>
+    </div>
+    <div class="card-body">
+        {% if sittings %}
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Quiz</th>
+                            <th>Score</th>
+                            <th>Passed</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sitting in sittings %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'quiz:quiz_detail' sitting.quiz.url %}">
+                                        {{ sitting.quiz.title }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {{ sitting.current_score }} / {{ sitting.quiz.get_question_count }}
+                                </td>
+                                <td>
+                                    {% if sitting.check_if_passed %}
+                                        <span class="badge badge-success">Passed</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ sitting.end|date:"M d, Y H:i" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <h3>No quizzes completed yet</h3>
+                <p>Start taking quizzes to see your results here.</p>
+                <a href="{% url 'quiz:quiz_list' %}" class="btn btn-primary mt-2">Browse Quizzes</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

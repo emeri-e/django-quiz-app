@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Register — Quiz App{% endblock %}
+
+{% block content %}
+<div style="max-width: 440px; margin: 2rem auto;">
+    <div class="card">
+        <div class="card-header" style="text-align: center;">
+            <h2>Create Account</h2>
+            <p class="text-muted" style="margin-top: 0.25rem; font-size: 0.9rem;">Join us and start taking quizzes</p>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="form-group">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="form-text">{{ field.help_text }}</p>
+                        {% endif %}
+                        {% if field.errors %}
+                            {% for error in field.errors %}
+                                <p class="form-errors">{{ error }}</p>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg">Create Account</button>
+            </form>
+        </div>
+        <div class="card-footer" style="text-align: center;">
+            <p>Already have an account? <a href="{% url 'accounts:login' %}">Sign in</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

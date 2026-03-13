@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Results — {{ quiz.title }} — Quiz App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Quiz Results</h1>
+    <p>{{ quiz.title }}</p>
+</div>
+
+{% if results_hidden %}
+<div class="card mb-3">
+    <div class="card-body text-center">
+        <h3 style="margin-top: 1rem;">Assessment Submitted Successfully</h3>
+        <p style="color: var(--gray-600); margin-bottom: 2rem;">
+            Your answers have been recorded. The results for this exam will be released later.
+        </p>
+    </div>
+</div>
+{% else %}
+<!-- Score Card -->
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="score-display">
+            <div class="score-value {% if passed %}text-success{% else %}text-danger{% endif %}">
+                {{ percent }}%
+            </div>
+            <div class="score-label">
+                {{ sitting.current_score }} out of {{ sitting.get_total_questions }} correct
+            </div>
+
+            <div style="max-width: 400px; margin: 1.5rem auto;">
+                <div class="progress" style="height: 1rem;">
+                    <div class="progress-bar {% if passed %}success{% else %}danger{% endif %}"
+                         style="width: {{ percent }}%;"></div>
+                </div>
+            </div>
+
+            {% if quiz.pass_mark > 0 %}
+                {% if passed %}
+                    <span class="badge badge-success" style="font-size: 1rem; padding: 0.5rem 1.5rem;">
+                        PASSED
+                    </span>
+                    {% if quiz.success_text %}
+                        <p style="margin-top: 1rem; color: var(--gray-600);">{{ quiz.success_text }}</p>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-danger" style="font-size: 1rem; padding: 0.5rem 1.5rem;">
+                        FAILED
+                    </span>
+                    {% if quiz.fail_text %}
+                        <p style="margin-top: 1rem; color: var(--gray-600);">{{ quiz.fail_text }}</p>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Timing -->
+<div class="card mb-3">
+    <div class="card-body d-flex justify-between" style="flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <strong>Started:</strong>
+            {{ sitting.start|date:"M d, Y H:i" }}
+        </div>
+        <div>
+            <strong>Completed:</strong>
+            {{ sitting.end|date:"M d, Y H:i" }}
+        </div>
+    </div>
+</div>
+
+<!-- Answers Review -->
+{% if questions_with_answers %}
+    <div class="card">
+        <div class="card-header">
+            <h3>Answer Review</h3>
+        </div>
+        <div class="card-body">
+            {% for item in questions_with_answers %}
+                <div style="{% if not forloop.first %}border-top: 1px solid var(--gray-200); padding-top: 1.5rem; margin-top: 1.5rem;{% endif %}">
+                    <p class="question-number">Question {{ forloop.counter }}</p>
+
+                    {% if item.question.figure %}
+                        {% include "quiz/includes/_question_image.html" with image=item.question.figure %}
+                    {% endif %}
+
+                    <p class="question-text" style="font-size: 1rem;">{{ item.question.content }}</p>
+
+                    {% include "quiz/includes/_correct_answer.html" with item=item %}
+
+                    {% if item.question.explanation %}
+                        <div class="question-explanation">
+                            <strong>Explanation:</strong> {{ item.question.explanation }}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+<div style="margin-top: 2rem; text-align: center;">
+    <a href="{% url 'quiz:quiz_detail' quiz.url %}" class="btn btn-secondary">Back to Quiz</a>
+    <a href="{% url 'quiz:quiz_list' %}" class="btn btn-primary">All Quizzes</a>
+</div>
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ quiz.title }} — Quiz App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>{{ quiz.title }}</h1>
+    {% if quiz.category %}
+        <p>
+            <a href="{% url 'quiz:category_detail' quiz.category.name|slugify %}">
+                {{ quiz.category.name }}
+            </a>
+        </p>
+    {% endif %}
+</div>
+
+<div class="grid grid-2" style="align-items: start;">
+    <div class="card">
+        {% if quiz.image %}
+            <img src="{{ quiz.image.url }}" alt="{{ quiz.title }}" class="quiz-image">
+        {% endif %}
+        <div class="card-body">
+            {% if quiz.description %}
+                <p style="margin-bottom: 1rem;">{{ quiz.description }}</p>
+            {% endif %}
+
+            <table>
+                <tr>
+                    <td><strong>Questions</strong></td>
+                    <td>{{ question_count }}</td>
+                </tr>
+                {% if quiz.time_limit %}
+                <tr>
+                    <td><strong>Time Limit</strong></td>
+                    <td>{{ quiz.time_limit }} minutes</td>
+                </tr>
+                {% endif %}
+                {% if quiz.pass_mark > 0 %}
+                <tr>
+                    <td><strong>Pass Mark</strong></td>
+                    <td>{{ quiz.pass_mark }}%</td>
+                </tr>
+                {% endif %}
+                <tr>
+                    <td><strong>Answer Feedback</strong></td>
+                    <td>{% if quiz.answers_at_end %}After completion{% else %}After each question{% endif %}</td>
+                </tr>
+                {% if quiz.single_attempt %}
+                <tr>
+                    <td><strong>Attempts</strong></td>
+                    <td><span class="badge badge-warning">Single attempt only</span></td>
+                </tr>
+                {% endif %}
+            </table>
+
+            <div style="margin-top: 1.5rem;">
+                {% if can_take %}
+                    {% if incomplete_sitting %}
+                        <a href="{% url 'quiz:quiz_take' quiz.url %}" class="btn btn-success btn-lg btn-block">
+                            Continue Quiz
+                        </a>
+                        <p class="text-muted text-center mt-1" style="font-size: 0.85rem;">
+                            You have an incomplete attempt.
+                        </p>
+                    {% else %}
+                        <a href="{% url 'quiz:quiz_take' quiz.url %}" class="btn btn-primary btn-lg btn-block">
+                            Start Quiz
+                        </a>
+                    {% endif %}
+                {% else %}
+                    <div class="alert alert-info">
+                        You have already completed this quiz. Only one attempt is allowed.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if previous_sittings %}
+        <div class="card">
+            <div class="card-header">
+                <h3>Your Previous Attempts</h3>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                {% if not quiz.hide_results %}
+                                <th>Score</th>
+                                <th>Result</th>
+                                {% endif %}
+                                <th>Date</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sitting in previous_sittings %}
+                                <tr>
+                                    {% if not quiz.hide_results %}
+                                    <td>{{ sitting.current_score }}/{{ sitting.get_total_questions }}</td>
+                                    <td>
+                                        {% if sitting.check_if_passed %}
+                                            <span class="badge badge-success">Passed</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Failed</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endif %}
+                                    <td>{{ sitting.end|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'quiz:quiz_results' quiz.url sitting.pk %}"
+                                           class="btn btn-secondary btn-sm">Review</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

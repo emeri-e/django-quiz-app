@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}My Progress — Quiz App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>My Progress</h1>
+    <p>Track your success rate across categories.</p>
+</div>
+
+{% if scores %}
+    <div class="grid grid-2">
+        {% for entry in scores %}
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-between align-center mb-2">
+                        <h3 style="font-size: 1.05rem;">{{ entry.category }}</h3>
+                        <span class="fw-bold {% if entry.percent >= 70 %}text-success{% elif entry.percent >= 40 %}text-warning{% else %}text-danger{% endif %}">
+                            {{ entry.percent }}%
+                        </span>
+                    </div>
+                    <div class="progress mb-1">
+                        <div class="progress-bar {% if entry.percent >= 70 %}success{% elif entry.percent >= 40 %}warning{% else %}danger{% endif %}"
+                             style="width: {{ entry.percent }}%;"></div>
+                    </div>
+                    <p class="text-muted" style="font-size: 0.85rem;">
+                        {{ entry.score }} correct out of {{ entry.possible }} questions
+                    </p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card">
+        <div class="card-body empty-state">
+            <h3>No progress recorded yet</h3>
+            <p>Complete some quizzes to track your per-category progress!</p>
+            <a href="{% url 'quiz:quiz_list' %}" class="btn btn-primary mt-2">Browse Quizzes</a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

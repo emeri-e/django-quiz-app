@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Sittings — Quiz App{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Exam Sittings</h1>
+    <p>All completed exam attempts.</p>
+</div>
+
+{% if sittings %}
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Quiz</th>
+                            <th>Score</th>
+                            <th>Result</th>
+                            <th>Started</th>
+                            <th>Completed</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sitting in sittings %}
+                            <tr>
+                                <td>{{ sitting.user.username|default:"Anonymous" }}</td>
+                                <td>{{ sitting.quiz.title }}</td>
+                                <td>{{ sitting.current_score }}/{{ sitting.get_total_questions }}</td>
+                                <td>
+                                    {% if sitting.check_if_passed %}
+                                        <span class="badge badge-success">Passed</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ sitting.start|date:"M d, Y H:i" }}</td>
+                                <td>{{ sitting.end|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'quiz:sitting_detail' sitting.pk %}"
+                                       class="btn btn-secondary btn-sm">Details</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="card">
+        <div class="card-body empty-state">
+            <h3>No sittings recorded</h3>
+            <p>Completed quiz attempts will appear here.</p>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="page-header mt-4" style="display: flex; justify-content: space-between; align-items: flex-start;">
+    <div>
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <a href="{% url 'quiz:quiz_list' %}" style="text-decoration: none; color: var(--gray-500); font-size: 0.9rem;">← Back to Quizzes</a>
+        </div>
+        <h1 style="display: flex; align-items: center; gap: 1rem;">
+            {{ quiz.title }}
+            {% if quiz.featured %}
+                <span class="badge" style="background: #f1c40f; color: #fff; font-size: 0.8rem; vertical-align: middle;">⭐ Featured</span>
+            {% endif %}
+            {% if quiz.draft %}
+                <span class="badge badge-warning" style="font-size: 0.8rem; vertical-align: middle;">Draft</span>
+            {% else %}
+                <span class="badge badge-success" style="font-size: 0.8rem; vertical-align: middle;">Published</span>
+            {% endif %}
+        </h1>
+        <p class="text-muted" style="margin-top: 0.5rem;">{{ quiz.description }}</p>
+    </div>
+    
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;">
+        <form action="{% url 'quiz:quiz_featured_toggle' quiz.url %}" method="post" style="margin: 0;">
+            {% csrf_token %}
+            {% if quiz.featured %}
+                <button type="submit" class="btn btn-secondary" style="border-color: #f1c40f; color: #d4ac0d;">
+                    ⭐ Remove from Featured
+                </button>
+            {% else %}
+                <button type="submit" class="btn btn-secondary">
+                    ☆ Set as Featured
+                </button>
+            {% endif %}
+        </form>
+        <a href="{% url 'quiz:quiz_update' quiz.url %}" class="btn btn-secondary">
+            <span>✏️ Edit Quiz Settings</span>
+        </a>
+    </div>
+</div>
+
+{# ── Quiz Stats Bar ── #}
+<div style="display: flex; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+    <div style="background: var(--primary-light); color: var(--primary); padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+        📋 {{ mc_questions|length|add:tf_questions|length|add:essay_questions|length }} Questions
+    </div>
+    <div style="background: var(--gray-100); color: var(--gray-700); padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 0.9rem;">
+        {% if quiz.category %}📂 {{ quiz.category.name }}{% else %}📂 No Category{% endif %}
+    </div>
+    {% if quiz.time_limit %}
+    <div style="background: var(--gray-100); color: var(--gray-700); padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 0.9rem;">
+        ⏱ {{ quiz.time_limit }} min
+    </div>
+    {% endif %}
+    {% if quiz.pass_mark > 0 %}
+    <div style="background: var(--gray-100); color: var(--gray-700); padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 0.9rem;">
+        🎯 Pass: {{ quiz.pass_mark }}%
+    </div>
+    {% endif %}
+    <div style="background: var(--gray-100); color: var(--gray-700); padding: 0.75rem 1.25rem; border-radius: var(--radius); font-size: 0.9rem;">
+        📝 {{ sittings|length }} Submission{{ sittings|length|pluralize }}
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-top: 2rem;">
+
+    {# ── Left Column: Questions ── #}
+    <div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h2 style="margin: 0;">Questions</h2>
+            <div style="display: flex; gap: 0.5rem;">
+                <a href="{% url 'quiz:bulk_upload' quiz.url %}" class="btn btn-secondary btn-sm">
+                    📁 Bulk Upload CSV
+                </a>
+                <div class="dropdown">
+                    <button class="btn btn-primary btn-sm dropdown-trigger" onclick="this.nextElementSibling.classList.toggle('show')">
+                        + Add Question ▼
+                    </button>
+                    <div class="dropdown-menu">
+                        <a href="{% url 'quiz:mcquestion_create' quiz.url %}">Multiple Choice</a>
+                        <a href="{% url 'quiz:tfquestion_create' quiz.url %}">True / False</a>
+                        <a href="{% url 'quiz:essayquestion_create' quiz.url %}">Essay</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if not mc_questions and not tf_questions and not essay_questions %}
+            <div class="card" style="text-align: center; padding: 3rem 1rem; background: var(--gray-50); border: 2px dashed var(--gray-300);">
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">📭</div>
+                <h3 style="color: var(--gray-600); margin-bottom: 0.5rem;">No questions yet</h3>
+                <p style="color: var(--gray-500); font-size: 0.9rem; max-width: 400px; margin: 0 auto;">
+                    Use the <strong>+ Add Question</strong> button or <strong>Bulk Upload CSV</strong> to start building this quiz.
+                </p>
+            </div>
+        {% else %}
+
+            {# ── Multiple Choice ── #}
+            {% if mc_questions %}
+            <div style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--primary-light);">
+                    <span style="background: var(--primary); color: white; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">MC</span>
+                    <h4 style="margin: 0; font-size: 1rem; color: var(--gray-700);">Multiple Choice ({{ mc_questions|length }})</h4>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% for q in mc_questions %}
+                    <div class="card" style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; transition: box-shadow 0.15s;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                                <span style="color: var(--gray-400); font-weight: 600; font-size: 0.85rem; flex-shrink: 0;">{{ forloop.counter }}.</span>
+                                <span style="color: var(--gray-800);">{{ q.content|truncatechars:120 }}</span>
+                            </div>
+                            {% if q.explanation %}
+                            <div style="margin-top: 0.4rem; font-size: 0.8rem; color: var(--gray-500); padding-left: 1.5rem;">
+                                💡 {{ q.explanation|truncatechars:80 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <a href="{% url 'quiz:mcquestion_update' q.pk %}" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; flex-shrink: 0;">✏️ Edit</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── True/False ── #}
+            {% if tf_questions %}
+            <div style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #d4edda;">
+                    <span style="background: var(--success); color: white; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">TF</span>
+                    <h4 style="margin: 0; font-size: 1rem; color: var(--gray-700);">True / False ({{ tf_questions|length }})</h4>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% for q in tf_questions %}
+                    <div class="card" style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                                <span style="color: var(--gray-400); font-weight: 600; font-size: 0.85rem; flex-shrink: 0;">{{ forloop.counter }}.</span>
+                                <span style="color: var(--gray-800);">{{ q.content|truncatechars:120 }}</span>
+                            </div>
+                            <div style="margin-top: 0.4rem; font-size: 0.8rem; color: var(--gray-500); padding-left: 1.5rem;">
+                                Answer: <strong>{% if q.correct %}True{% else %}False{% endif %}</strong>
+                            </div>
+                        </div>
+                        <a href="{% url 'quiz:tfquestion_update' q.pk %}" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; flex-shrink: 0;">✏️ Edit</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Essay ── #}
+            {% if essay_questions %}
+            <div style="margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 2px solid #fff3cd;">
+                    <span style="background: var(--warning); color: var(--gray-800); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">ESSAY</span>
+                    <h4 style="margin: 0; font-size: 1rem; color: var(--gray-700);">Essay ({{ essay_questions|length }})</h4>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% for q in essay_questions %}
+                    <div class="card" style="padding: 1rem 1.25rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="display: flex; align-items: baseline; gap: 0.5rem;">
+                                <span style="color: var(--gray-400); font-weight: 600; font-size: 0.85rem; flex-shrink: 0;">{{ forloop.counter }}.</span>
+                                <span style="color: var(--gray-800);">{{ q.content|truncatechars:120 }}</span>
+                            </div>
+                        </div>
+                        <a href="{% url 'quiz:essayquestion_update' q.pk %}" class="btn btn-secondary btn-sm" style="padding: 0.25rem 0.75rem; font-size: 0.8rem; flex-shrink: 0;">✏️ Edit</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    {# ── Right Column: Submissions ── #}
+    <div>
+        <div class="card" style="background: var(--gray-50); border: 1px solid var(--gray-200); position: sticky; top: 1rem;">
+            <div class="card-body">
+                <h3 style="margin-bottom: 1rem; font-size: 1.25rem; border-bottom: 1px solid var(--gray-300); padding-bottom: 0.5rem;">Recent Submissions</h3>
+                
+                {% if sittings %}
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        {% for sitting in sittings|slice:":10" %}
+                            <div style="background: var(--white); padding: 0.85rem 1rem; border-radius: var(--radius); border: 1px solid var(--gray-200); box-shadow: var(--shadow-sm);">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.4rem;">
+                                    <strong style="font-size: 0.9rem;">👤 {{ sitting.user.username }}</strong>
+                                    <span style="font-size: 0.8rem; color: var(--gray-500);">{{ sitting.end|date:"M d, P" }}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <span style="font-weight: 600; font-size: 1rem; color: var(--primary);">{{ sitting.current_score }} / {{ sitting.get_total_questions }}</span>
+                                    {% if perms.quiz.view_sittings %}
+                                        <a href="{% url 'quiz:marking_detail' sitting.pk %}" class="btn btn-secondary btn-sm" style="font-size: 0.75rem; padding: 0.2rem 0.5rem;">Review</a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if sittings|length > 10 %}
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <a href="{% url 'quiz:marking_list' %}?quiz={{ quiz.pk }}" style="font-size: 0.9rem; text-decoration: none;">View all submissions →</a>
+                        </div>
+                    {% endif %}
+                {% else %}
+                    <div style="text-align: center; padding: 1.5rem 0;">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📭</div>
+                        <p style="color: var(--gray-500); font-size: 0.9rem; margin: 0;">No completed submissions yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

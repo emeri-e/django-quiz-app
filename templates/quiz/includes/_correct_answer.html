@@ -1,0 +1,38 @@
+<!-- Correct Answer Feedback Partial -->
+{% if item.question.question_type == 'essay' %}
+    <div class="form-check" style="background: var(--info-light); border-color: var(--info);">
+        <label><strong>Essay answer:</strong> {{ item.user_answer|default:"No answer provided" }}</label>
+    </div>
+{% elif item.is_correct %}
+    <div class="form-check answer-correct">
+        <label>✓ Your answer was correct
+            {% if item.question.question_type == 'mc' %}
+                {% for answer in item.question.get_answers %}
+                    {% if answer.pk|stringformat:"d" == item.user_answer %}
+                        — {{ answer.content }}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                — {{ item.user_answer }}
+            {% endif %}
+        </label>
+    </div>
+{% elif item.is_correct == False %}
+    <div class="form-check answer-incorrect">
+        <label>✗ Incorrect.
+            {% if item.question.question_type == 'mc' %}
+                You answered:
+                {% for answer in item.question.get_answers %}
+                    {% if answer.pk|stringformat:"d" == item.user_answer %}
+                        {{ answer.content }}
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                You answered: {{ item.user_answer }}
+            {% endif %}
+        </label>
+    </div>
+    <div class="form-check answer-correct mt-1">
+        <label>✓ Correct answer: {{ item.correct_answer }}</label>
+    </div>
+{% endif %}
